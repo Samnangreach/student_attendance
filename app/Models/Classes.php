@@ -23,6 +23,11 @@ class Classes extends Model
         return $this->belongsToMany(Teacher::class, 'class_teacher', 'class_id', 'teacher_id');
     }
 
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
+    
     
 
 }

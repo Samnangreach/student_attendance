@@ -13,6 +13,12 @@ class Subject extends Model
 
     public function teachers()
     {
-        return $this->belongsToMany(Teacher::class, 'subject_teacher');
+        return $this->belongsToMany(Teacher::class, 'subject_teacher', 'subject_id', 'teacher_id');
     }
+
+    public function schedules() 
+    {
+        return $this->hasMany(Schedule::class);
+    }
+    
 }

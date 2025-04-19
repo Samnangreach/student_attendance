@@ -184,6 +184,11 @@ class AccountController extends Controller
         return redirect()->route('groups.index');
     }
 
+    public function adminSchedule()
+    {
+        return redirect()->route('schedules.index');
+    }
+
 
 
     
@@ -198,12 +203,43 @@ class AccountController extends Controller
 
     public function teacherStudent()
     {
-        return redirect()->route('students.index'); // Redirect to StudentController
+        return redirect()->route('students.index'); 
     }
 
     public function teacherAttendance()
     {
-        return redirect()->route('attendances.index'); // Redirect to AttendanceController
+        return redirect()->route('attendances.index'); 
     }
     
+    public function teacherEvaluation()
+    {
+        return redirect()->route('evaluations.index');
+    }
+
+    public function teacherSchedule()
+    {
+        return redirect()->route('schedules.index'); 
+    }
+
+    // public function teacherReport()
+    // {
+    //     // return redirect()->route('reports.classReport'); 
+    //     $classId = auth()->user()->classes->first()->id ?? 1; // Example default class
+    //     return redirect()->route('reports.classReport', ['class_id' => $classId]);
+    // }
+
+
+    public function teacherReport()
+    {
+        $classId = auth()->user()->classes->first()->id ?? null;
+
+        if (!$classId) {
+            return back()->with('error', 'No class assigned to this teacher.');
+        }
+
+        return redirect()->route('reports.index', [
+            'class_id' => $classId
+        ]);
+    }
+
 }

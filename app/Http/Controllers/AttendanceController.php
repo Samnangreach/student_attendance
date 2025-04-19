@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Student;
+use App\Models\Classes;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Attendance;
@@ -13,42 +14,162 @@ class AttendanceController extends Controller
     {
 
         // test code
-        
+
         if (!Auth::check()) {
             return redirect()->route('login')->withErrors([
                 'email' => 'Please login to access the Student List.',
             ])->onlyInput('email');
         }
+
+    $user = Auth::user();
+    $classId = $request->get('class_id');
+
+    // Prepare date range for attendance
+
+    $month = $request->get('month', now()->format('Y-m'));
+
+    $carbonMonth = Carbon::createFromFormat('Y-m', $month);
+    $startDate = $carbonMonth->copy()->startOfMonth();
+    $endDate = $carbonMonth->copy()->endOfMonth();
+
     
+    $prevMonth = Carbon::createFromFormat('Y-m', $month)->subMonth()->format('Y-m');
+    $nextMonth = Carbon::createFromFormat('Y-m', $month)->addMonth()->format('Y-m');
+    // $startDate = Carbon::now()->startOfMonth();
+    // $endDate = Carbon::now()->endOfMonth();
+    $dates = [];
+
+    // for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
+    //     $dates[] = $date->toDateString();
+    // }
+
+    for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+        $dates[] = $date->toDateString();
+    }
+
+    // ADMIN VIEW
+    if ($user->role === 'admin') {
+        $classes = Classes::all();
+
+        // $query = Student::with(['attendances' => function ($q) use ($startDate, $endDate) {
+        //     $q->whereBetween('date', [$startDate->copy()->toDateString(), $endDate->copy()->toDateString()]);
+        // }]);
+
+        // if ($classId) {
+        //     $query->whereHas('classes', function ($q) use ($classId) {
+        //         $q->where('classes.id', $classId);
+        //     });
+        // }
+
+        $query = Student::with(['attendances' => function ($q) use ($startDate, $endDate, $classId) {
+            $q->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()]);
+            if ($classId) {
+                $q->where('class_id', $classId); // ✅ FILTER attendance by class
+            }
+        }]);
+        
+        if ($classId) {
+            $query->whereHas('classes', function ($q) use ($classId) {
+                $q->where('classes.id', $classId); // ✅ FILTER students by class
+            });
+        }
+        
+
+        $emps = $query->get();
+
+        return view('admin.attendances.index', compact('emps', 'dates', 'classes', 'classId'));
+    }
+
+    // TEACHER VIEW
+    if ($user->role === 'teacher') {
+        $teacher = $user->teacher;
+        $classes = $teacher->classes ?? collect();
+
+        $selectedClass = $classes->where('id', $classId)->first() ?? $classes->first();
+
+        if (!$selectedClass) {
+            return back()->withErrors(['No classes found.']);
+        }
+
+        // $students = $selectedClass->students()->with(['attendances' => function ($q) use ($startDate, $endDate) {
+        //     $q->whereBetween('date', [$startDate->copy()->toDateString(), $endDate->copy()->toDateString()]);
+        // }])->get();
+
+        // $students = $selectedClass->students()->with('attendances')->get();
+
+        $students = $selectedClass->students()->with([
+            'attendances' => function ($q) use ($startDate, $endDate, $selectedClass) {
+                $q->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+                  ->where('class_id', $selectedClass->id);
+            }
+        ])->get();
         
         
-        // Fetch students with attendance data
-        $students = Student::with('attendances')->get();
-    
-        // Define the date range for attendance
-        $startDate = Carbon::now()->startOfMonth();
-        $endDate = Carbon::now()->endOfMonth();
+        
+        
+
+        
+        
+        
         $dates = [];
-    
-        for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
-            $dates[] = $date->toDateString(); // Convert date to 'Y-m-d' format
+        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+            $dates[] = $date->toDateString();
         }
+
+        $prevMonth = Carbon::createFromFormat('Y-m', $month)->subMonth()->format('Y-m');
+        $nextMonth = Carbon::createFromFormat('Y-m', $month)->addMonth()->format('Y-m');
         
-        $user = Auth::user();
-        // Return different views for Admin and Teacher
-        if ($user->role == 'admin') {
-            return view('admin.attendances.index', [
-                'emps' => $students,
-                'dates' => $dates
-            ]);
-        } elseif ($user->role == 'teacher') {
-            return view('teachers.attendances.index', [
-                'emps' => $students,
-                'dates' => $dates
-            ]);
-        }
+        
+
+        return view('teachers.attendances.index', [
+            'emps' => $students,
+            'dates' => $dates,
+            'classes' => $classes,
+            'selectedClass' => $selectedClass,
+            'month' => $month,
+            'prevMonth' => $prevMonth,
+            'nextMonth' => $nextMonth
+        ]);
+    }
+
+    abort(403, 'Unauthorized action.');
+
+        
+        // if (!Auth::check()) {
+        //     return redirect()->route('login')->withErrors([
+        //         'email' => 'Please login to access the Student List.',
+        //     ])->onlyInput('email');
+        // }
     
-        abort(403, 'Unauthorized action.');
+        
+        
+        // // Fetch students with attendance data
+        // $students = Student::with('attendances')->get();
+    
+        // // Define the date range for attendance
+        // $startDate = Carbon::now()->startOfMonth();
+        // $endDate = Carbon::now()->endOfMonth();
+        // $dates = [];
+    
+        // for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
+        //     $dates[] = $date->toDateString(); // Convert date to 'Y-m-d' format
+        // }
+        
+        // $user = Auth::user();
+        // // Return different views for Admin and Teacher
+        // if ($user->role == 'admin') {
+        //     return view('admin.attendances.index', [
+        //         'emps' => $students,
+        //         'dates' => $dates
+        //     ]);
+        // } elseif ($user->role == 'teacher') {
+        //     return view('teachers.attendances.index', [
+        //         'emps' => $students,
+        //         'dates' => $dates
+        //     ]);
+        // }
+    
+        // abort(403, 'Unauthorized action.');
 
 
         // real code
@@ -91,56 +212,110 @@ class AttendanceController extends Controller
 
     public function store(Request $request)
     {
+        // if (!$request->has('attendance')) {
+        //     return back()->withErrors(['error' => 'No attendance data provided!']);
+        // }
+        // // Validate the incoming request
+        // $request->validate([
+        //     'date' => 'required|date',
+        //     'attendance' => 'required|array',
+        //     'attendance.*.status' => 'nullable|in:present,late,absent,excused'
+        // ]);
+        //     // foreach ($request->attendance as $student_id => $data) {
+        //     //     Attendance::updateOrCreate(
+        //     //         ['student_id' => $student_id, 'date' => $request->date],
+        //     //             ['status' => $data['status'] ?? null,
+        //     //             'note' => $data['note'] ?? null,
+        //     //         ]
+        //     //     );
+        //     // }
+        //     foreach ($request->attendance as $student_id => $data) {
+        //         // Set default status if none is selected
+        //         $status = $data['status'] ?? 'absent';
+        //         $note = $data['note'] ?? null;
+
+        //         $attendance = Attendance::where('student_id', $student_id)
+        //                         ->where('date', $request->date)
+        //                         ->first();
+                
+        //         if ($attendance) {
+        //             // If found, update it
+        //             $attendance->update([
+        //                 'status' => $status,
+        //                 'note' => $note
+        //             ]);
+        //         } else {
+        //             // If not found, create a new record
+        //             Attendance::create([
+        //                 'student_id' => $student_id,
+        //                 'date' => $request->date,
+        //                 'status' => $status,
+        //                 'note' => $note,
+        //             ]);
+        //         }
+                
+        //         // Attendance::updateOrCreate(
+        //         //     ['student_id' => $student_id, 'date' => $request->date],
+        //         //     ['status' => $status, 'note' => $note]
+        //         // );
+        //     }
+        
+            
+        //     return redirect()->route('attendances.index')->with('success', 'Attendance recorded successfully.');
+
+        // dd($request->all());
+
+
         if (!$request->has('attendance')) {
             return back()->withErrors(['error' => 'No attendance data provided!']);
         }
-        // Validate the incoming request
+    
         $request->validate([
             'date' => 'required|date',
+            'class_id' => 'required|exists:classes,id', // ✅ required
             'attendance' => 'required|array',
             'attendance.*.status' => 'nullable|in:present,late,absent,excused'
         ]);
-            // foreach ($request->attendance as $student_id => $data) {
-            //     Attendance::updateOrCreate(
-            //         ['student_id' => $student_id, 'date' => $request->date],
-            //             ['status' => $data['status'] ?? null,
-            //             'note' => $data['note'] ?? null,
-            //         ]
-            //     );
-            // }
-            foreach ($request->attendance as $student_id => $data) {
-                // Set default status if none is selected
-                $status = $data['status'] ?? 'absent';
-                $note = $data['note'] ?? null;
-
-                $attendance = Attendance::where('student_id', $student_id)
-                                ->where('date', $request->date)
-                                ->first();
-                
-                if ($attendance) {
-                    // If found, update it
-                    $attendance->update([
-                        'status' => $status,
-                        'note' => $note
-                    ]);
-                } else {
-                    // If not found, create a new record
-                    Attendance::create([
-                        'student_id' => $student_id,
-                        'date' => $request->date,
-                        'status' => $status,
-                        'note' => $note
-                    ]);
-                }
-                
-                // Attendance::updateOrCreate(
-                //     ['student_id' => $student_id, 'date' => $request->date],
-                //     ['status' => $status, 'note' => $note]
-                // );
-            }
-        
     
-            return redirect()->route('attendances.index')->with('success', 'Attendance recorded successfully.');
+        $user = Auth::user();
+        $classId = $request->class_id;
+    
+        // ✅ Restrict teachers to their assigned classes
+        if ($user->role === 'teacher') {
+            $allowedClassIds = $user->teacher->classes->pluck('id')->toArray();
+            if (!in_array($classId, $allowedClassIds)) {
+                return back()->withErrors(['error' => 'Unauthorized class.']);
+            }
+        }
+    
+        foreach ($request->attendance as $student_id => $data) {
+            $status = $data['status'] ?? 'absent';
+            $note = $data['note'] ?? null;
+    
+            $attendance = Attendance::where('student_id', $student_id)
+                ->where('date', $request->date)
+                ->where('class_id', $classId)
+                ->first();
+    
+            if ($attendance) {
+                $attendance->update([
+                    'status' => $status,
+                    'note' => $note
+                ]);
+            } else {
+                Attendance::create([
+                    'student_id' => $student_id,
+                    'class_id' => $classId, // ✅ THIS LINE FIXES THE SQL ERROR
+                    'date' => $request->date,
+                    'status' => $status,
+                    'note' => $note,
+                    'recorded_by' => $user->id
+                ]);
+            }
+        }
+    
+        return redirect()->route('attendances.index', ['class_id' => $classId])
+            ->with('success', 'Attendance recorded successfully.');
         
     }
     // public function store(Request $request)
@@ -184,36 +359,73 @@ class AttendanceController extends Controller
         // // return view('employees.create')->with("depts",$depts);
         // return view('attendances.create',['emps'=>$employees]);
         
-        $date = $request->input('date', \Carbon\Carbon::now()->format('y-m-d'));
-        $students = Student::all();
+        // $date = $request->input('date', \Carbon\Carbon::now()->format('y-m-d'));
+        // $students = Student::all();
         
-        // Retrieve attendance records for the selected date
-        $attendances = Attendance::where('date', $date)->get()->keyBy('student_id');
+        // // Retrieve attendance records for the selected date
+        // $attendances = Attendance::where('date', $date)->get()->keyBy('student_id');
         
-        $user = Auth::user();
+        // $user = Auth::user();
 
     
-        // return view('attendances.create', [
-        //     'emps' => $students,
-        //     'attendances' => $attendances,
-        //     'selectedDate' => $date
-        // ]);
+        // // return view('attendances.create', [
+        // //     'emps' => $students,
+        // //     'attendances' => $attendances,
+        // //     'selectedDate' => $date
+        // // ]);
 
 
         
+        // if ($user->role === 'admin') {
+        //     return view('admin.attendances.create', [
+        //         'emps' => $students,
+        //         'attendances' => $attendances,
+        //         'selectedDate' => $date
+        //     ]);
+        // } elseif ($user->role === 'teacher') {
+        //     return view('teachers.attendances.create', [
+        //         'emps' => $students,
+        //         'attendances' => $attendances,
+        //         'selectedDate' => $date
+        //     ]);
+        // }
+
+
+        // test 
+        $user = Auth::user();
+        $selectedDate = $request->get('date', now()->format('Y-m-d'));
+    
         if ($user->role === 'admin') {
-            return view('admin.attendances.create', [
-                'emps' => $students,
-                'attendances' => $attendances,
-                'selectedDate' => $date
-            ]);
-        } elseif ($user->role === 'teacher') {
-            return view('teachers.attendances.create', [
-                'emps' => $students,
-                'attendances' => $attendances,
-                'selectedDate' => $date
-            ]);
+            $classes = Classes::all();
+            return view('admin.attendances.create', compact('classes', 'selectedDate'));
         }
+    
+        // Teacher
+        $teacher = $user->teacher;
+        $classes = $teacher->classes ?? collect();
+        // $classId = $request->get('class_id') ?? old('classes.0');
+        $classId = $request->get('class_id') ?? old('class_id');
+
+        $selectedClass = $classes->where('id', $classId)->first() ?? $classes->first();
+    
+        if (!$selectedClass) {
+            return back()->withErrors(['No classes found.']);
+        }
+    
+        // Load students in the selected class
+        $emps = Student::whereHas('classes', function ($q) use ($selectedClass) {
+            $q->where('classes.id', $selectedClass->id);
+        })->get();
+    
+        // Load attendance for selected class + date
+        $attendances = Attendance::where('class_id', $selectedClass->id)
+            ->where('date', $selectedDate)
+            ->get()
+            ->keyBy('student_id');
+    
+        return view('teachers.attendances.create', compact(
+            'classes', 'selectedClass', 'emps', 'selectedDate', 'attendances'
+        ));
     }
     /**
      * Display the specified resource.

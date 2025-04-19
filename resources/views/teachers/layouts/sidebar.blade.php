@@ -76,29 +76,80 @@
                         @endforeach
                     </ul>
                 </li>
-                
-                
-                
 
 
-                
                 <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-group"></i>
+                        <p>
+                            Attendance
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview" style="display: none;">
+                        @foreach($teacherClasses as $class)
+                            <li class="nav-item ps-3">
+                                <a href="{{ route('attendances.index', ['class_id' => $class->id]) }}" class="nav-link">
+                                    <i class="fas fa-chalkboard nav-icon"></i>
+                                    <p>{{ $class->class_name }}</p>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-chart-bar"></i>
+                        <p>
+                            Evaluation
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview" style="display: none;">
+                        @foreach($teacherClasses as $class)
+                            <li class="nav-item ps-3">
+                                <a href="{{ route('evaluations.index', ['class_id' => $class->id]) }}" class="nav-link">
+                                    <i class="fas fa-chalkboard nav-icon"></i>
+                                    <p>{{ $class->class_name }}</p>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('teachers.schedule') }}" class="nav-link">
+                        <i class="nav-icon fas fa-home"></i>
+                        <p>
+                            Schedule
+                        </p>
+                    </a>
+                </li>
+                
+                
+                
+
+
+                
+                {{-- <li class="nav-item">
                     <a href="{{ route('teachers.attendance') }}" class="nav-link">
                         <i class="nav-icon fas fa-group"></i>
                         <p>
                             Attendance
                         </p>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a href="" class="nav-link">
+                </li> --}}
+                {{-- <li class="nav-item">
+                    <a href="{{ route('teachers.evaluation') }}" class="nav-link">
                         <i class="nav-icon fas fa-chart-bar"></i>
                         <p>
                             Evaluation
                         </p>
                     </a>
-                </li><li class="nav-item">
-                    <a href="" class="nav-link">
+                </li> --}}
+                <li class="nav-item">
+                    <a href="{{ route('teachers.classReport', $class->id) }}" class="nav-link">
                         <i class="nav-icon fas fa-clipboard-list"></i>
                         <p>
                             Report

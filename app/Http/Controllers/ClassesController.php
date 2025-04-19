@@ -35,7 +35,7 @@ class ClassesController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'class_name'=>'required|max:25|regex:/^[a-zA-Z0-9\s\-]+$/',
+            'class_name'=>'required|max:25|regex:/^[\p{Khmer}a-zA-Z0-9\s\-]+$/u',
             'description'=>'nullable|max:100|regex:/^[a-zA-Z0-9\s\-]+$/',
         ]);
         $data=$request->except("_token");
@@ -68,7 +68,8 @@ class ClassesController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'class_name'=>'required|max:25|regex:/^[a-zA-Z0-9\s\-]+$/',
+            // 'class_name'=>'required|max:25|regex:/^[a-zA-Z0-9\s\-]+$/',
+            'class_name' => 'required|max:25|regex:/^[\p{Khmer}a-zA-Z0-9\s\-]+$/u',
             'description'=>'nullable|max:100|regex:/^[a-zA-Z0-9\s\-]+$/'
         ]);
         $data=$request->except("_token","_method");

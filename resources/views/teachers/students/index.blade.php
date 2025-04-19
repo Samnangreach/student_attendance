@@ -70,11 +70,12 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-sm table-hovered">
+                {{-- <table class="table table-sm table-hovered"> --}}
+                <table class="table table-bordered">
                     <thead class="table-dark">
-                        <th>#</th>
-                        <th>Eng Name</th>
-                        <th>Kh Name</th>
+                        <th>No.</th>
+                        <th>English Name</th>
+                        <th>Khmer Name</th>
                         <th>Gender</th>
                         <th>Parent Phone</th>
                         <th>Address</th>

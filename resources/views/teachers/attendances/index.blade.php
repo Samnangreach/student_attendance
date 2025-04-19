@@ -56,8 +56,30 @@ th, td {
 
 <div class="card">
     <div class="card-header">
-        <a href="{{route('attendances.create')}}" class="btn btn-primary mb-2">Take Attendance</a>
+        {{-- <a href="{{route('attendances.create')}}" class="btn btn-primary mb-2">Take Attendance</a> --}}
+        <a href="{{ route('attendances.create', ['class_id' => $selectedClass->id]) }}" class="btn btn-primary mb-2">
+            Take Attendance
+        </a>        
         <span id="liveClock" style="float: right; text-align: right;"></span>
+        <h5>Class: {{ $selectedClass->class_name ?? 'N/A' }}</h5>
+        {{-- <a href="{{ route('attendances.index', ['class_id' => $selectedClass->id, 'month' => $prevMonth]) }}" class="btn btn-outline-primary">&laquo; Previous Month</a>
+
+        <a href="{{ route('attendances.index', ['class_id' => $selectedClass->id, 'month' => $nextMonth]) }}" class="btn btn-outline-primary float-end">Next Month &raquo;</a> --}}
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <a href="{{ route('attendances.index', ['class_id' => $selectedClass->id, 'month' => $prevMonth]) }}" class="btn btn-outline-secondary btn-sm">
+                &laquo; {{ \Carbon\Carbon::createFromFormat('Y-m', $prevMonth)->format('F Y') }}
+            </a>
+        
+            <strong>{{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }}</strong>
+        
+            <a href="{{ route('attendances.index', ['class_id' => $selectedClass->id, 'month' => $nextMonth]) }}" class="btn btn-outline-secondary btn-sm">
+                {{ \Carbon\Carbon::createFromFormat('Y-m', $nextMonth)->format('F Y') }} &raquo;
+            </a>
+        </div>
+        
+        
+        
 
     </div>
     <div class="card-body">
@@ -66,6 +88,9 @@ th, td {
             {{-- <button type="submit" class="btn btn-primary mb-3">Submit</button> --}}
             <div class="table-responsive">
                 <table class="table table-bordered">
+                    @php
+                    $carbonMonth = \Carbon\Carbon::createFromFormat('Y-m', $month);
+                    @endphp
                     <thead class="table-dark">
                         <tr>
                             <th class="sticky-column">No.</th>
@@ -74,7 +99,7 @@ th, td {
                             <th class="sticky-column">Gender</th>
                             <th class="sticky-column">API ID</th>
                             
-                            @for ($i = 1; $i <= now()->daysInMonth; $i++)
+                            @for ($i = 1; $i <= $carbonMonth->daysInMonth; $i++)
                                 <th class="scrollable-column" >
                                     {{-- {{ now()->format('d') }}-{{ str_pad($i, 2, '0', STR_PAD_LEFT) }} --}}
                                     {{ str_pad($i, 2, '0', STR_PAD_LEFT) }}
@@ -86,17 +111,31 @@ th, td {
                         @foreach ($emps as $index => $student)
                             <tr>
                                 <td class="sticky-column">{{ $index + 1 }}</td>
-                                <td class="sticky-column">{{ $student->eng_name }}</td>
-                                <td class="sticky-column">{{ $student->kh_name }}</td>
+
+                                
+                                <td class="sticky-column text-start">{{ $student->eng_name }}</td>
+                                <td class="sticky-column text-start">{{ $student->kh_name }}</td>
                                 <td class="sticky-column">{{ $student->gender }}</td>
                                 <td class="sticky-column">API{{ str_pad($student->id, 3, '0', STR_PAD_LEFT) }}</td>
 
                                 {{-- <td class="sticky-column">{{ $student->id }}</td> --}}
+                               
                             
-                                @for ($i = 1; $i <= now()->daysInMonth; $i++)
+                                @for ($i = 1; $i <= $carbonMonth->daysInMonth; $i++)
                                     @php
-                                        $date = now()->format('Y-m') . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
-                                        $attendance = $student->attendances->where('date', $date)->first();
+                                        // $date = now()->format('Y-m') . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+
+                                        $date = $carbonMonth->format('Y-m') . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+                                        
+
+                                        // $attendance = $student->attendances->where('date', $date)->first();
+                                        // $attendance = $student->attendances->first(fn ($a) => $a->date->format('Y-m-d') === $date && $a->class_id == $selectedClass->id);
+                                        $attendance = $student->attendances->first(fn ($a) =>
+                                            $a->date->format('Y-m-d') === $date && $a->class_id == $selectedClass->id
+                                        );
+
+
+
                                         $status = optional($attendance)->status;
                                         $note = optional($attendance)->note ?? 'No note';
 

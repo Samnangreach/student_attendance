@@ -6,7 +6,10 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\ClassesController;
+use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,12 +51,16 @@ Route::controller(AccountController::class)->group(function(){
         Route::get('/admin/subject', [AccountController::class, 'adminSubject'])->name('admin.subject');
         Route::get('/admin/class', [AccountController::class, 'adminClass'])->name('admin.class');
         Route::get('/admin/group', [AccountController::class, 'adminGroup'])->name('admin.group');
+        Route::get('/admin/schedule', [AccountController::class, 'adminSchedule'])->name('admin.schedule');
     });
 
     Route::middleware('role:teacher')->group(function () {
         Route::get('/teacher/dashboard', [AccountController::class, 'teacherDashboard'])->name('teachers.dashboard');
         Route::get('/teacher/student', [AccountController::class, 'teacherStudent'])->name('teachers.student');
         Route::get('/teacher/attendance', [AccountController::class, 'teacherAttendance'])->name('teachers.attendance');
+        Route::get('/teacher/evaluation', [AccountController::class, 'teacherEvaluation'])->name('teachers.evaluation');
+        Route::get('/teacher/schedule', [AccountController::class, 'teacherSchedule'])->name('teachers.schedule');
+        Route::get('/reports/class/{class_id}', [AccountController::class, 'teacherReport'])->name('teachers.classReport');
     });
 
     
@@ -125,6 +132,23 @@ Route::controller(AccountController::class)->group(function(){
     Route::resources([
         "groups"=>GroupController::class,
     ]);
+
+    Route::resources([
+        "evaluations"=>EvaluationController::class,
+    ]);
+
+    Route::resources([
+        "schedules"=>ScheduleController::class,
+    ]);
+    
+    Route::resources([
+        "reports"=>ReportController::class,
+    ]);
+
+
+
+
+
 
 // Route::controller(StudentController::class)->group(function(){
 //     Route::get('/students', 'index')->name('students.index'); // Show student list

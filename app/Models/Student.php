@@ -10,12 +10,21 @@ class Student extends Model
     use HasFactory;
     // protected $guarded=[];
     protected $fillable = ['eng_name', 'kh_name', 'gender', 'phone', 'address'];
-    public function attendances() {
+
+    public function attendances()
+    {
         return $this->hasMany(Attendance::class);
     }
+
 
     public function classes()
     {
         return $this->belongsToMany(Classes::class, 'class_students', 'student_id', 'class_id');
     }
+
+    public function evaluations()
+    {
+        return $this->hasMany(Evaluation::class);
+    }
+
 }

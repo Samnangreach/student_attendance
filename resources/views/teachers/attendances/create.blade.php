@@ -22,13 +22,23 @@
                     {{-- <input type="date" name="date" id="date" class="form-control" style="width: 150px;" value="{{ $selectedDate ?? now()->toDateString() }}"> --}}
                     <input type="date" name="date" id="date" class="form-control" style="width: 150px;" value="{{ old('date', now()->format('y-m-d')) }}">
                     {{-- <button type="submit" class="btn btn-secondary mt-2">Load Attendance</button> --}}
+                    
                 </div>
             </form>
         <form action="{{ route('attendances.store') }}" method="POST">
             @csrf
-
+            <input type="hidden" name="class_id" value="{{ $selectedClass->id }}">
             <!-- Attendance Date -->
             <input type="hidden" name="date" value="{{ $selectedDate }}">
+
+            {{-- Hidden class assignment --}}
+            {{-- ✅ Correct --}}
+            {{-- <input type="hidden" name="class_id" value="{{ old('class_id', $selectedClass->id) }}"> --}}
+           
+
+
+
+            {{-- show class info --}}
             {{-- <div class="mb-3">
                 <label for="date" class="form-label">Date</label>
                 <input type="date" name="date" id="date" class="form-control" style="width: 150px;" value="{{ \Carbon\Carbon::now()->format('Y-m-d') }}" required>

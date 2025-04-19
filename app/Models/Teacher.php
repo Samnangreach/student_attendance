@@ -28,7 +28,7 @@ class Teacher extends Model
 
     public function subjects()
     {
-        return $this->belongsToMany(Subject::class, 'subject_teacher');
+        return $this->belongsToMany(Subject::class, 'subject_teacher',  'teacher_id', 'subject_id' );
     }
 
 
@@ -36,5 +36,11 @@ class Teacher extends Model
     {
         return $this->belongsToMany(Classes::class, 'class_teacher', 'teacher_id', 'class_id');
     }
+
+    public function schedules() 
+    {
+        return $this->hasMany(Schedule::class);
+    }
+    
 
 }
